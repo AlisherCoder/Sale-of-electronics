@@ -1,0 +1,187 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Information {
+  id             String @id @default(uuid())
+  about          String
+  email          String
+  phone          String
+  privacy_policy String
+  social_media   Json[]
+}
+
+model Region {
+  id    Int    @id @default(autoincrement())
+  name  String
+  Users User[]
+}
+
+model User {
+  id         String     @id @default(uuid())
+  image      String?
+  first_name String
+  last_name  String
+  phone      String     @unique
+  email      String     @unique
+  password   String
+  region_id  Int?
+  Region     Region?    @relation(fields: [region_id], references: [id], onDelete: SetNull)
+  role       Role       @default(USER)
+  was_online DateTime   @default(now())
+  status     StatusUser @default(INACTIVE)
+  Sessions   Session[]
+  Products   Product[]
+  Comments   Comment[]
+  Likes      Like[]
+  Views      View[]
+  Orders     Order[]
+}
+
+model Session {
+  id       String   @id @default(uuid())
+  ip       String
+  location String?
+  info     Json
+  date     DateTime @default(now())
+  user_id  String
+  User     User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model Category {
+  id       Int          @id @default(autoincrement())
+  name     String
+  type     TypeCategory
+  Products Product[]
+}
+
+model Product {
+  id          String        @id @default(uuid())
+  image       String
+  name        String
+  price       Float
+  currency    Currency
+  ceiling     Float         @default(0)
+  count       Int
+  description String
+  location    String
+  condition   Condition
+  bargain     Boolean       @default(false)
+  trade_type  TradeType     @default(PAID)
+  status      StatusProduct @default(PENDING)
+  category_id Int?
+  Category    Category?     @relation(fields: [category_id], references: [id], onDelete: SetNull)
+  user_id     String
+  User        User          @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  Comments    Comment[]
+  Likes       Like[]
+  Colors      ColorItem[]
+  Views       View[]
+  Orders      Order[]
+}
+
+model Comment {
+  id         String   @id @default(uuid())
+  text       String
+  stars      Float
+  date       DateTime @default(now())
+  user_id    String
+  User       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  product_id String
+  Product    Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+}
+
+model Like {
+  id         String  @id @default(uuid())
+  user_id    String
+  User       User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  product_id String
+  Product    Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+}
+
+model View {
+  id         String   @id @default(uuid())
+  user_id    String
+  User       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  product_id String
+  Product    Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  date       DateTime @default(now())
+}
+
+model Color {
+  id    String      @id @default(uuid())
+  name  String
+  Items ColorItem[]
+}
+
+model ColorItem {
+  id         String  @id @default(uuid())
+  color_id   String
+  Color      Color   @relation(fields: [color_id], references: [id], onDelete: Cascade)
+  product_id String
+  Product    Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@unique([color_id, product_id])
+}
+
+model Order {
+  id         String   @id @default(uuid())
+  user_id    String
+  User       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  product_id String
+  Product    Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  count      Int
+  summa      Float
+  date       DateTime @default(now())
+}
+
+enum Role {
+  ADMIN
+  SUPERADMIN
+  USER
+}
+
+enum TypeCategory {
+  PHONE
+  ELECTRONICS
+  LAPTOP
+  ACCESSORIES
+}
+
+enum Currency {
+  USD
+  SUM
+}
+
+enum Condition {
+  NEW
+  USED
+}
+
+enum TradeType {
+  FREE
+  PAID
+  BARTER
+}
+
+enum StatusProduct {
+  ACTIVE
+  INACTIVE
+  PENDING
+}
+
+enum StatusUser {
+  ACTIVE
+  INACTIVE
+}
