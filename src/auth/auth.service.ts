@@ -9,6 +9,7 @@ import {
   ActivateDto,
   CreateAuthDto,
   LoginDto,
+  ResetPasswordDto,
   SendOtpDto,
 } from './dto/create-auth.dto';
 import * as DeviseDetector from 'device-detector-js';
@@ -107,7 +108,7 @@ export class AuthService {
         let newSession: Session = {
           ip: req.ip!,
           user_id: user.id,
-          location: 'Uzbekistan Tashkent',
+          location: req.body.location || null,
           info: device,
         };
         await this.prisma.session.create({ data: newSession });
@@ -154,6 +155,20 @@ export class AuthService {
     }
   }
 
+  async superAdmin(superAdminDto: SendOtpDto) {
+    let { email } = superAdminDto;
+    try {
+      let superAdmin = await this.prisma.user.update({
+        where: { email },
+        data: { role: 'SUPERADMIN' },
+      });
+
+      return { data: 'Super admin created successfully', superAdmin };
+    } catch (error) {
+      return new BadRequestException(error.message);
+    }
+  }
+
   async sendOTP(sendOtpDto: SendOtpDto) {
     let { email } = sendOtpDto;
     try {
@@ -175,6 +190,50 @@ export class AuthService {
     }
   }
 
+  async refreshToken(req: Request) {
+    let user = req['user'];
+    try {
+      let updateUser = await this.prisma.user.update({
+        where: { id: user.id },
+        data: { was_online: new Date() },
+      });
+
+      if (!updateUser) {
+        return new UnauthorizedException('Unauthorized');
+      }
+
+      let accessToken = this.genAccessToken({
+        id: user.id,
+        role: user.role,
+        status: user.status,
+      });
+
+      return { accessToken, updateUser };
+    } catch (error) {
+      return new BadRequestException(error.message);
+    }
+  }
+
+  async resetPassword(resetPasswordDto: ResetPasswordDto) {
+    let { email, otp, new_password } = resetPasswordDto;
+    try {
+      let isValid = totp.check(otp, this.otpsecret + email);
+      if (!isValid) {
+        return new BadRequestException('OTP or email is wrong');
+      }
+
+      let hash = bcrypt.hashSync(new_password, 10);
+      await this.prisma.user.update({
+        where: { email },
+        data: { password: hash },
+      });
+
+      return { data: 'Your password updated successfully' };
+    } catch (error) {
+      return new BadRequestException(error.message);
+    }
+  }
+
   genRefreshToken(payload: object) {
     return this.jwtService.sign(payload, {
       secret: this.refsecret,
@@ -185,7 +244,7 @@ export class AuthService {
   genAccessToken(payload: object) {
     return this.jwtService.sign(payload, {
       secret: this.accsecret,
-      expiresIn: '15m',
+      expiresIn: '12h',
     });
   }
 }

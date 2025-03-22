@@ -6,9 +6,35 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { RegionModule } from './region/region.module';
 import { MailModule } from './mail/mail.module';
+import { UserModule } from './user/user.module';
+import { UploadModule } from './upload/upload.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
+import { CategoryModule } from './category/category.module';
+import { ColorModule } from './color/color.module';
+import { ProductModule } from './product/product.module';
+import { CommentModule } from './comment/comment.module';
+import { LikeModule } from './like/like.module';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), PrismaModule, AuthModule, RegionModule, MailModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    PrismaModule,
+    AuthModule,
+    RegionModule,
+    MailModule,
+    UserModule,
+    UploadModule,
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads'),
+      serveRoot: '/file',
+    }),
+    CategoryModule,
+    ColorModule,
+    ProductModule,
+    CommentModule,
+    LikeModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

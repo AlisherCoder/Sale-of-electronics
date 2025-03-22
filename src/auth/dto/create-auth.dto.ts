@@ -1,4 +1,5 @@
 import {
+  IsArray,
   IsEmail,
   IsNotEmpty,
   IsNumber,
@@ -8,9 +9,9 @@ import {
 
 export class CreateAuthDto {
   @IsNotEmpty()
-  @IsString()
+  @IsArray()
   @IsOptional()
-  image: string;
+  image?: string[];
 
   @IsNotEmpty()
   @IsString()
@@ -61,4 +62,24 @@ export class SendOtpDto {
   @IsNotEmpty()
   @IsEmail()
   email: string;
+}
+
+export class RefreshTokenDto {
+  @IsNotEmpty()
+  @IsString()
+  refreshToken: string;
+}
+
+export class ResetPasswordDto {
+  @IsNotEmpty()
+  @IsEmail()
+  email: string;
+
+  @IsNotEmpty()
+  @IsString()
+  otp: string;
+
+  @IsNotEmpty()
+  @IsString()
+  new_password: string;
 }
