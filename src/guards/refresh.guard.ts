@@ -14,8 +14,8 @@ export class RefreshGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     let request: Request = context.switchToHttp().getRequest();
+    
     let { refreshToken } = request.body;
-
     if (!refreshToken) {
       throw new UnauthorizedException('Unauthorized');
     }

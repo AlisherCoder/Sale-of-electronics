@@ -2,6 +2,7 @@ import {
   ActivateDto,
   CreateAuthDto,
   LoginDto,
+  RefreshTokenDto,
   ResetPasswordDto,
   SendOtpDto,
 } from './dto/create-auth.dto';
@@ -12,7 +13,9 @@ import { AuthGuard } from 'src/guards/auth.guard';
 import { Role, Roles } from 'src/guards/roles.decorator';
 import { RefreshGuard } from 'src/guards/refresh.guard';
 import { RolesGuard } from 'src/guards/roles.guard';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiBearerAuth()
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -47,7 +50,7 @@ export class AuthController {
 
   @UseGuards(RefreshGuard)
   @Post('refresh-token')
-  refreshToken(@Req() req: Request) {
+  refreshToken(@Req() req: Request, @Body() refreshTokenDto: RefreshTokenDto) {
     return this.authService.refreshToken(req);
   }
 

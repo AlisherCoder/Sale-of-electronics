@@ -19,6 +19,7 @@ model Information {
   email          String
   phone          String
   privacy_policy String
+  usd            Float
   social_media   Json[]
 }
 
@@ -29,26 +30,29 @@ model Region {
 }
 
 model User {
-  id         String     @id @default(uuid())
-  image      String[]
-  first_name String
-  last_name  String
-  phone      String     @unique
-  email      String     @unique
-  password   String
-  region_id  Int?
-  Region     Region?    @relation(fields: [region_id], references: [id], onDelete: SetNull)
-  role       Role       @default(USER)
-  was_online DateTime   @default(now())
-  status     StatusUser @default(INACTIVE)
-  created_at DateTime   @default(now())
-  updated_at DateTime   @updatedAt
-  Sessions   Session[]
-  Products   Product[]
-  Comments   Comment[]
-  Likes      Like[]
-  Views      View[]
-  Orders     Order[]
+  id               String     @id @default(uuid())
+  image            String[]
+  first_name       String
+  last_name        String
+  phone            String     @unique
+  email            String     @unique
+  password         String
+  region_id        Int?
+  Region           Region?    @relation(fields: [region_id], references: [id], onDelete: SetNull)
+  role             Role       @default(USER)
+  was_online       DateTime   @default(now())
+  status           StatusUser @default(INACTIVE)
+  created_at       DateTime   @default(now())
+  updated_at       DateTime   @updatedAt
+  Sessions         Session[]
+  Products         Product[]
+  Comments         Comment[]
+  Likes            Like[]
+  Views            View[]
+  sentMessages     Chat[]     @relation(name: "chatFrom")
+  receivedMessages Chat[]     @relation(name: "chatTo")
+  seller           Order[]    @relation(name: "seller")
+  buyer            Order[]    @relation(name: "buyyer")
 }
 
 model Session {
@@ -93,6 +97,7 @@ model Product {
   Colors      ColorItem[]
   Views       View[]
   Orders      Order[]
+  Chat        Chat[]
 }
 
 model Comment {
@@ -100,24 +105,24 @@ model Comment {
   text       String
   stars      Float
   date       DateTime @default(now())
-  user_id    String
-  User       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id    String?
+  User       User?    @relation(fields: [user_id], references: [id], onDelete: SetNull)
   product_id String
   Product    Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
 }
 
 model Like {
   id         String  @id @default(uuid())
-  user_id    String
-  User       User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id    String?
+  User       User?   @relation(fields: [user_id], references: [id], onDelete: SetNull)
   product_id String
   Product    Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
 }
 
 model View {
   id         String   @id @default(uuid())
-  user_id    String
-  User       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id    String?
+  User       User?    @relation(fields: [user_id], references: [id], onDelete: SetNull)
   product_id String
   Product    Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
   date       DateTime @default(now())
@@ -141,13 +146,37 @@ model ColorItem {
 
 model Order {
   id         String   @id @default(uuid())
-  user_id    String
-  User       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  product_id String
-  Product    Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
   count      Int
   summa      Float
+  seller_id  String?
+  buyyer_id  String?
+  product_id String
+  seller     User?    @relation(name: "seller", fields: [seller_id], references: [id], onDelete: SetNull)
+  buyyer     User?    @relation(name: "buyyer", fields: [buyyer_id], references: [id], onDelete: SetNull)
+  Product    Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
   date       DateTime @default(now())
+}
+
+model Chat {
+  id         String   @id @default(uuid())
+  text       String
+  from_id    String?
+  to_id      String?
+  product_id String
+  date       DateTime @default(now())
+  from       User?    @relation(name: "chatFrom", fields: [from_id], references: [id], onDelete: SetNull)
+  to         User?    @relation(name: "chatTo", fields: [to_id], references: [id], onDelete: SetNull)
+  product    Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@index([from_id])
+  @@index([to_id])
+  @@index([product_id])
+}
+
+enum StatusOrder {
+  PAID
+  UNPAID
+  PENDING
 }
 
 enum Role {

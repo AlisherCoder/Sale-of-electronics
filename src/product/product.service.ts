@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -18,6 +19,8 @@ export class ProductService {
     let { colors, ...createData } = createProductDto;
     let user = req['user'];
     try {
+      let [info] = await this.prisma.information.findMany();
+
       let category = await this.prisma.category.findUnique({
         where: { id: createData.category_id },
       });
@@ -30,8 +33,18 @@ export class ProductService {
         return new BadRequestException('Colors cannot be empty');
       }
 
+      let current_colors = await this.prisma.color
+        .findMany({ select: { id: true } })
+        .then((colors) => colors.map((color) => color.id));
+
+      for (let color of colors) {
+        if (!current_colors.includes(color)) {
+          return new NotFoundException('Not found color');
+        }
+      }
+
       if (createProductDto.currency == 'USD') {
-        createProductDto.price = createProductDto.price * 12.926;
+        createProductDto.price = createProductDto.price * info.usd || 13000;
       }
 
       let newProduct = await this.prisma.product.create({
@@ -53,7 +66,14 @@ export class ProductService {
   async activate(activeProductDto: ActiveProductDto) {
     let { product_id } = activeProductDto;
     try {
-      await this.prisma.product.update({
+      let product = await this.prisma.product.findUnique({
+        where: { id: product_id },
+      });
+      if (!product) {
+        return new NotFoundException('No product found');
+      }
+
+      let data = await this.prisma.product.update({
         data: { status: 'ACTIVE' },
         where: { id: product_id },
       });
@@ -64,11 +84,42 @@ export class ProductService {
     }
   }
 
-  async findAll() {
+  async findAll(query: any) {
+    let {
+      page = 1,
+      limit = 10,
+      name,
+      price,
+      maxPrice,
+      minPrice,
+      condition,
+      bargain,
+      trade_type,
+      category_id,
+      sortBy = 'price',
+      order = 'asc',
+    } = query;
     try {
       let data = await this.prisma.product.findMany({
-        where: { status: 'ACTIVE' },
-        include: { Category: true },
+        where: {
+          name: name ? { contains: name, mode: 'insensitive' } : undefined,
+          price: {
+            gte: Number(minPrice) || undefined,
+            lte: Number(maxPrice) || undefined,
+            equals: Number(price) || undefined,
+          },
+          condition: condition || undefined,
+          bargain: Boolean(bargain) || undefined,
+          trade_type: trade_type || undefined,
+          category_id: Number(category_id) || undefined,
+          status: 'ACTIVE',
+        },
+        skip: (page - 1) * limit,
+        take: Number(limit),
+        orderBy: {
+          [sortBy]: order,
+        },
+        include: { Category: true, Colors: { include: { Color: true } } },
       });
 
       if (!data.length) {
@@ -119,12 +170,14 @@ export class ProductService {
     }
   }
 
-  async update(id: string, updateProductDto: UpdateProductDto) {
-    let { category_id, image, colors } = updateProductDto;
+  async update(id: string, updateProductDto: UpdateProductDto, req: Request) {
+    let user = req['user'];
+    let { colors, ...updateprd } = updateProductDto;
+    let updatedcoler = false;
     try {
-      if (category_id) {
+      if (updateprd.category_id) {
         let category = await this.prisma.category.findUnique({
-          where: { id: category_id },
+          where: { id: updateprd.category_id },
         });
 
         if (!category) {
@@ -137,18 +190,43 @@ export class ProductService {
         return new NotFoundException('No product found');
       }
 
+      if (
+        product.user_id != user.id &&
+        (user.role != 'ADMIN' || user.role != 'SUPERADMIN')
+      ) {
+        return new ForbiddenException('Not allowed');
+      }
+
       if (colors && !colors.length) {
         return new BadRequestException('Colors cannot be empty');
       } else if (colors && colors.length) {
-        await this.prisma.colorItem.deleteMany({ where: { product_id: id } });
+        let current_colors = await this.prisma.color
+          .findMany({ select: { id: true } })
+          .then((colors) => colors.map((color) => color.id));
+
+        for (let color of colors) {
+          if (!current_colors.includes(color)) {
+            return new NotFoundException('Not found color');
+          }
+        }
+        updatedcoler = true;
       }
 
       let data = await this.prisma.product.update({
         where: { id },
-        data: updateProductDto,
+        data: updateprd,
       });
 
-      if (image && image.length) {
+      if (updatedcoler) {
+        await this.prisma.colorItem.deleteMany({ where: { product_id: id } });
+        for (let col of colors!) {
+          await this.prisma.colorItem.create({
+            data: { color_id: col, product_id: data.id },
+          });
+        }
+      }
+
+      if (updateprd.image && updateprd.image.length) {
         product.image.forEach((image) => {
           let pathfile = path.join('uploads', image);
           try {
@@ -165,9 +243,22 @@ export class ProductService {
     }
   }
 
-  async remove(id: string) {
+  async remove(id: string, req: Request) {
+    let user = req['user'];
     try {
+      let product = await this.prisma.product.findUnique({ where: { id } });
+      if (!product) {
+        return new NotFoundException('Not found product');
+      }
+
       let data = await this.prisma.product.delete({ where: { id } });
+
+      if (
+        data.user_id != user.id &&
+        (user.role != 'ADMIN' || user.role != 'SUPERADMIN')
+      ) {
+        return new ForbiddenException('Not allowed');
+      }
 
       if (data.image.length) {
         data.image.forEach((image) => {
@@ -186,10 +277,21 @@ export class ProductService {
     }
   }
 
-  async getPending() {
+  async getPending(query: any) {
+    let { page = 1, limit = 10, sortBy = 'created_at', order = 'asc' } = query;
     try {
       let data = await this.prisma.product.findMany({
         where: { status: 'PENDING' },
+        skip: (page - 1) * limit,
+        take: Number(limit),
+        orderBy: {
+          [sortBy]: order,
+        },
+        include: {
+          Category: true,
+          User: true,
+          Colors: { include: { Color: true } },
+        },
       });
 
       if (!data.length) {
@@ -202,10 +304,21 @@ export class ProductService {
     }
   }
 
-  async getInActive() {
+  async getInActive(query: any) {
+    let { page = 1, limit = 10, sortBy = 'created_at', order = 'asc' } = query;
     try {
       let data = await this.prisma.product.findMany({
         where: { status: 'INACTIVE' },
+        skip: (page - 1) * limit,
+        take: Number(limit),
+        orderBy: {
+          [sortBy]: order,
+        },
+        include: {
+          Category: true,
+          User: true,
+          Colors: { include: { Color: true } },
+        },
       });
 
       if (!data.length) {

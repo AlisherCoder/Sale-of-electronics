@@ -1,77 +1,96 @@
+import { ApiProperty } from '@nestjs/swagger';
 import {
+  ArrayNotEmpty,
   IsArray,
   IsBoolean,
   IsEnum,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsPositive,
   IsString,
+  MaxLength,
+  MinLength,
 } from 'class-validator';
 import { Condition, Currency, TradeType } from 'src/types/types';
 
 export class UpdateProductDto {
-  @IsNotEmpty()
+  @ApiProperty({ example: ['image1.png', 'image2.png'] })
   @IsArray()
-  @IsOptional()
+  @ArrayNotEmpty()
+  @IsString({ each: true })
   image?: string[];
 
+  @ApiProperty({ example: 'Samsung s25 Ultra' })
   @IsNotEmpty()
   @IsString()
-  @IsOptional()
+  @MaxLength(32)
+  @MinLength(2)
   name?: string;
 
+  @ApiProperty({ example: 200 })
   @IsNotEmpty()
+  @IsNumber()
   @IsPositive()
-  @IsOptional()
   price?: number;
 
-  @IsNotEmpty()
+  @ApiProperty({ example: ['color-1 id', 'color-2 id'] })
   @IsArray()
+  @ArrayNotEmpty()
+  @IsString({ each: true })
   colors?: string[];
 
+  @ApiProperty({ enum: ['USD', 'SUM'] })
   @IsNotEmpty()
   @IsEnum(Currency)
-  @IsOptional()
   currency?: Currency;
 
+  @ApiProperty({ example: 10 })
   @IsNotEmpty()
+  @IsNumber()
   @IsPositive()
-  @IsOptional()
   @IsOptional()
   ceiling?: number;
 
+  @ApiProperty({ example: 5 })
   @IsNotEmpty()
+  @IsNumber()
   @IsPositive()
-  @IsOptional()
   count?: number;
 
+  @ApiProperty({ example: 'Samsung s25 sotaman holati yaxshi' })
   @IsNotEmpty()
   @IsString()
-  @IsOptional()
+  @MaxLength(256)
+  @MinLength(2)
   description?: string;
 
+  @ApiProperty({ example: 'Chilonzor 19' })
   @IsNotEmpty()
   @IsString()
-  @IsOptional()
+  @MaxLength(256)
+  @MinLength(2)
   location?: string;
 
+  @ApiProperty({ enum: ['NEW', 'USED'] })
   @IsNotEmpty()
   @IsEnum(Condition)
-  @IsOptional()
   condition?: Condition;
 
+  @ApiProperty({ example: true })
   @IsNotEmpty()
   @IsBoolean()
-  @IsOptional()
   bargain?: boolean;
 
+  @ApiProperty({ enum: ['PAID', 'FREE', 'BARTER'] })
   @IsNotEmpty()
   @IsEnum(TradeType)
   @IsOptional()
   trade_type?: TradeType;
 
+  @ApiProperty({ example: 1 })
   @IsNotEmpty()
+  @IsNumber()
   @IsPositive()
-  @IsOptional()
   category_id?: number;
 }

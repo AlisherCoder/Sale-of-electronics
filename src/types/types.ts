@@ -5,6 +5,11 @@ export interface Session {
   info: object;
 }
 
+export type SM = {
+  name: string;
+  link: string;
+};
+
 export enum TypeCategory {
   PHONE = 'PHONE',
   ELECTRONICS = 'ELECTRONICS',

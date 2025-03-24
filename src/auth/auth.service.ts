@@ -9,6 +9,7 @@ import {
   ActivateDto,
   CreateAuthDto,
   LoginDto,
+  RefreshTokenDto,
   ResetPasswordDto,
   SendOtpDto,
 } from './dto/create-auth.dto';

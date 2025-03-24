@@ -32,9 +32,13 @@ export class ColorService {
     }
   }
 
-  async findAll() {
+  async findAll(query: any) {
+    let { page = 1, limit = 10 } = query;
     try {
-      let data = await this.prisma.color.findMany();
+      let data = await this.prisma.color.findMany({
+        skip: (page - 1) * limit,
+        take: Number(limit),
+      });
 
       if (!data.length) {
         return new NotFoundException('No colors found');
@@ -50,7 +54,7 @@ export class ColorService {
     try {
       let data = await this.prisma.color.findUnique({
         where: { id },
-        include: { Items: true },
+        include: { Items: { include: { Product: true } } },
       });
 
       if (!data) {

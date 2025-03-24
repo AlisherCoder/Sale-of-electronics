@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateLikeDto } from './dto/create-like.dto';
 import { Request } from 'express';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -10,6 +15,14 @@ export class LikeService {
   async create(createLikeDto: CreateLikeDto, req: Request) {
     let user = req['user'];
     try {
+      let product = await this.prisma.product.findUnique({
+        where: { id: createLikeDto.product_id },
+      });
+      
+      if (!product) {
+        return new NotFoundException('No product found');
+      }
+
       let data = await this.prisma.like.create({
         data: { ...createLikeDto, user_id: user.id },
       });
@@ -20,8 +33,17 @@ export class LikeService {
     }
   }
 
-  async remove(id: string) {
+  async remove(id: string, req: Request) {
+    let user = req['user'];
     try {
+      let like = await this.prisma.like.findUnique({ where: { id } });
+      if (!like) {
+        return new NotFoundException('Not found data');
+      }
+
+      if (user.id != like.user_id) {
+        return new ForbiddenException('Not allowed');
+      }
       let data = await this.prisma.like.delete({ where: { id } });
 
       return { data };

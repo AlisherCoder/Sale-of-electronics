@@ -32,9 +32,26 @@ export class CategoryService {
     }
   }
 
-  async findAll() {
+  async findAll(query: any) {
+    let { page = 1, limit = 10, ...filter } = query;
+    let search: any = {};
+    if (filter.name) {
+      search.name = { mode: 'insensitive', contains: filter.name };
+    }
+
+    if (filter.type) {
+      search.type = filter.type;
+    }
+
     try {
-      let data = await this.prisma.category.findMany();
+      let data = await this.prisma.category.findMany({
+        skip: (page - 1) * limit,
+        take: Number(limit),
+        orderBy: {
+          name: 'asc',
+        },
+        where: search,
+      });
 
       if (!data.length) {
         return new NotFoundException('No categories found');

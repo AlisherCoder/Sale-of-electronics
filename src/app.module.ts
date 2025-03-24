@@ -15,6 +15,9 @@ import { ColorModule } from './color/color.module';
 import { ProductModule } from './product/product.module';
 import { CommentModule } from './comment/comment.module';
 import { LikeModule } from './like/like.module';
+import { OrderModule } from './order/order.module';
+import { InformationModule } from './information/information.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -34,6 +37,9 @@ import { LikeModule } from './like/like.module';
     ProductModule,
     CommentModule,
     LikeModule,
+    OrderModule,
+    InformationModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],
