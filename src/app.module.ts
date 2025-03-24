@@ -18,6 +18,7 @@ import { LikeModule } from './like/like.module';
 import { OrderModule } from './order/order.module';
 import { InformationModule } from './information/information.module';
 import { ChatModule } from './chat/chat.module';
+import { ChattModule } from './chatt/chatt.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { ChatModule } from './chat/chat.module';
     OrderModule,
     InformationModule,
     ChatModule,
+    ChattModule,
   ],
   controllers: [AppController],
   providers: [AppService],

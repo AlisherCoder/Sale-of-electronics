@@ -60,10 +60,13 @@ export class UserController {
     return this.userService.getMyProducts(req, query);
   }
 
-  // @Get('mychats')
-  // getMyChats(@Req() req: Request) {
-  //   return this.userService.getMyChats(req);
-  // }
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @UseGuards(AuthGuard)
+  @Get('mychats')
+  getMyChats(@Req() req: Request, @Query() query: any) {
+    return this.userService.getMyChats(req, query);
+  }
 
   @ApiQuery({
     name: 'order',

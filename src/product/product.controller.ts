@@ -72,6 +72,13 @@ export class ProductController {
     return this.productService.getInActive(query);
   }
 
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @Get('by-reyting')
+  getByReyting(@Query() query: any) {
+    return this.productService.getByReyting(query);
+  }
+
   @ApiQuery({
     name: 'order',
     required: false,

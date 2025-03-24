@@ -99,6 +99,8 @@ export class ProductService {
       sortBy = 'price',
       order = 'asc',
     } = query;
+    page = Number(page);
+    limit = Number(limit);
     try {
       let data = await this.prisma.product.findMany({
         where: {
@@ -115,18 +117,22 @@ export class ProductService {
           status: 'ACTIVE',
         },
         skip: (page - 1) * limit,
-        take: Number(limit),
+        take: limit,
         orderBy: {
           [sortBy]: order,
         },
-        include: { Category: true, Colors: { include: { Color: true } } },
+        include: {
+          Category: true,
+          Comments: true,
+          Colors: { include: { Color: true } },
+        },
       });
 
       if (!data.length) {
         return new NotFoundException('No products found');
       }
 
-      return { data };
+      return { total: data.length, page, limit, data };
     } catch (error) {
       return new BadRequestException(error.message);
     }
@@ -326,6 +332,48 @@ export class ProductService {
       }
 
       return { data };
+    } catch (error) {
+      return new BadRequestException(error.message);
+    }
+  }
+
+  async getByReyting(query: any) {
+    let { page = 1, limit = 10 } = query;
+    page = Number(page);
+    limit = Number(limit);
+    try {
+      let data = await this.prisma.product.findMany({
+        where: { status: 'ACTIVE' },
+        include: {
+          Category: true,
+          Comments: {
+            select: {
+              stars: true,
+            },
+          },
+          Colors: { include: { Color: true } },
+        },
+      });
+
+      if (!data.length) {
+        return new BadRequestException('Not found data');
+      }
+
+      data = data.map((prd) => ({
+        ...prd,
+        avgStars: prd.Comments.length
+          ? prd.Comments.reduce((sum, comment) => sum + comment.stars, 0) /
+            prd.Comments.length
+          : 0,
+      }));
+
+      data.sort((a, b) => b['avgStars'] - a['avgStars']);
+      let skip = (page - 1) * limit;
+      let take = skip + limit;
+
+      data = data.slice(skip, take);
+
+      return { total: data.length, page, limit, data };
     } catch (error) {
       return new BadRequestException(error.message);
     }

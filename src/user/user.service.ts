@@ -123,6 +123,31 @@ export class UserService {
     }
   }
 
+  async getMyChats(req: Request, query: any) {
+    let { page = 1, limit = 10 } = query;
+
+    let user = req['user'];
+    try {
+      let data = await this.prisma.chat.findMany({
+        where: { from_id: user.id },
+        skip: (page - 1) * limit,
+        take: Number(limit),
+        orderBy: {
+          date: 'desc',
+        },
+        include: { product: true, to: true, from: true },
+      });
+
+      if (!data.length) {
+        return new NotFoundException('Not found chats');
+      }
+
+      return { data };
+    } catch (error) {
+      return new BadRequestException(error.message);
+    }
+  }
+
   async getMyOrders(req: Request, query: any) {
     let { page = 1, limit = 10, sortBy = 'date', order = 'desc' } = query;
     let user = req['user'];
