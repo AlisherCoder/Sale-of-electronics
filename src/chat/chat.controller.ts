@@ -8,20 +8,20 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ChattService } from './chatt.service';
-import { CreateChattDto } from './dto/create-chatt.dto';
+import { ChatService } from './chat.service';
+import { CreateChatDto } from './dto/create-chat.dto';
 import { Request } from 'express';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from 'src/guards/auth.guard';
 
 @ApiBearerAuth()
-@Controller('chatt')
-export class ChattController {
-  constructor(private readonly chattService: ChattService) {}
+@Controller('chat')
+export class ChatController {
+  constructor(private readonly chattService: ChatService) {}
 
   @UseGuards(AuthGuard)
   @Post()
-  create(@Body() createChattDto: CreateChattDto, @Req() req: Request) {
+  create(@Body() createChattDto: CreateChatDto, @Req() req: Request) {
     return this.chattService.create(createChattDto, req);
   }
 

@@ -4,15 +4,15 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateChattDto } from './dto/create-chatt.dto';
+import { CreateChatDto } from './dto/create-chat.dto';
 import { Request } from 'express';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
-export class ChattService {
+export class ChatService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createChattDto: CreateChattDto, req: Request) {
+  async create(createChattDto: CreateChatDto, req: Request) {
     let { product_id } = createChattDto;
     let user = req['user'];
     try {

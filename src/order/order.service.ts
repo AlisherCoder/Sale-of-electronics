@@ -6,13 +6,13 @@ import {
 import { CreateOrderDto } from './dto/create-order.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Request } from 'express';
-import { ChatGateway } from 'src/chat/chat.gateway';
+// import { ChatGateway } from 'src/chat/chat.gateway';
 
 @Injectable()
 export class OrderService {
   constructor(
     private prisma: PrismaService,
-    private chat: ChatGateway,
+    // private chat: ChatGateway,
   ) {}
 
   async create(createOrderDto: CreateOrderDto, req: Request) {
@@ -44,10 +44,10 @@ export class OrderService {
         data: { count: { decrement: count } },
       });
 
-      this.chat.server.emit('newOrder', {
-        message: 'New order created',
-        order: data,
-      });
+      // this.chat.server.emit('newOrder', {
+      //   message: 'New order created',
+      //   order: data,
+      // });
 
       return { data };
     } catch (error) {

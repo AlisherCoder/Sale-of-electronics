@@ -17,8 +17,8 @@ import { CommentModule } from './comment/comment.module';
 import { LikeModule } from './like/like.module';
 import { OrderModule } from './order/order.module';
 import { InformationModule } from './information/information.module';
+// import { ChatModule } from './chat/chat.module';
 import { ChatModule } from './chat/chat.module';
-import { ChattModule } from './chatt/chatt.module';
 
 @Module({
   imports: [
@@ -40,8 +40,8 @@ import { ChattModule } from './chatt/chatt.module';
     LikeModule,
     OrderModule,
     InformationModule,
+    // ChatModule,
     ChatModule,
-    ChattModule,
   ],
   controllers: [AppController],
   providers: [AppService],
